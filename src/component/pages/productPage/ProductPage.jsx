@@ -5,6 +5,7 @@ import { useAuth } from "../../../utils/AuthContext";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreVertical } from 'lucide-react';
 import Dialog from "../../layout/Dialog";
 import "../../../utils/common.css";
+import CommonTable from "../../layout/CommonTable";
 
 function ProductsPage() {
   const navigate = useNavigate();
@@ -48,6 +49,15 @@ function ProductsPage() {
       remark: '이영희',
     },
   ];
+
+  const columns = [
+    { key: "logo", label: "ロゴ", className: "col-logo" },
+    { key: "product_name", label: "プロダクト名", className: "col-name" },
+    { key: "actions", label: "詳細", className: "col-actions" },
+    { key: "remark", label: "備考", className: "col-remark" },
+    { key: "menu", label: "", className: "col-menu" },
+  ];
+  
   const [totalPages, setTotalPages] = useState(2);
 
 
@@ -190,182 +200,107 @@ function ProductsPage() {
             </div>
             <button className="btn btn-primary"onClick={() => setIsOpen(true)}>登録</button>
           </div>
-          <div className="table-wrapper">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>ロゴ</th>
-                  <th>プロダクト名</th>
-                  <th>詳細</th>
-                  <th>備考</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="5" className="loading-cell">
-                      読み込み中...
-                    </td>
-                  </tr>
-                ) : products.length === 0 ? (
-                  <tr>
-                    <td colSpan={user?.role === 'admin' ? 5 : 4} className="empty-cell">
-                      プロダクトがありません
-                    </td>
-                  </tr>
-                ) : (
-                  products.map((product) => (
-                    <tr 
-                      key={product.id}
-                      className="row"
+
+          <CommonTable
+            columns={columns}
+            data={products}
+            loading={loading}
+            emptyMessage="プロダクトがありません"
+            renderRow={(product) => (
+              <tr key={product.id}>
+                <td className="col-no">Logo</td>
+                <td className="col-name">{product.product_name}</td>
+                <td className="col-actions">
+                  <Link to={`/products/${product.id}/plan`}>
+                    <button>プラン</button>
+                  </Link>
+                  <Link to={`/contracts?product_id=${product.id}`}>
+                    <button>契約</button>
+                  </Link>
+                </td>
+                <td className="col-remark">{product.remark}</td>
+                <td className="col-menu">
+                  <div
+                    className="menu-wrapper"
+                    ref={openDropdownId === product.id ? dropdownRef : null}
+                  >
+                    <button
+                      className="menu-button"
+                      onClick={() =>
+                        setOpenDropdownId(openDropdownId === product.id ? null : product.id)
+                      }
                     >
+                      <MoreVertical size={20} />
+                    </button>
+                    {openDropdownId === product.id && (
+                      <div className="menu-dropdown">
+                        <button className="menu-item">編集</button>
+                        <button className="menu-item menu-item-danger">削除</button>
+                      </div>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            )}
+          />
+     
+    
 
-                      {/* 여기까지 수정함 */}
-                      <td style={{
-                            width: "40px",
-                            height: "40px",
-                            background: "#ddd",
-                            textAlign: "center",
-                            lineHeight: "40px",
-                          }}>Logo
-                      </td>
-                      <td>{product.product_name}</td>
-                      <td>
-                        <Link to={`/products/${product.id}/plan`}>
-                          <button>プラン</button>
-                        </Link>
-                        <Link to={`/contracts?product_id=${product.id}`}>
-                          <button>契約</button>
-                        </Link>
-                      </td>
-                      <td>{product.remark}</td>
-                      <td className="menu-cell">
-                        <div className="menu-wrapper" ref={openDropdownId === product.id ? dropdownRef : null}>
-                          <button
-                            className="menu-button"
-                            onClick={(e) => {
-                              setOpenDropdownId(openDropdownId === product.id ? null : product.id);
-                            }}
-                          >
-                            <MoreVertical size={20} />
-                          </button>
-                          {openDropdownId === product.id && (
-                            <div className="menu-dropdown">
-                              <button
-                                // onClick={(e) => {
-                                //   handleEdit(e, notice.id);
-                                //   setOpenDropdownId(null);  }}
-                                className="menu-item"
-                              >
-                                編集
-                              </button>
-                              <button
-                                // onClick={(e) => {
-                                //   openDeleteModal(e, notice.id);
-                              
-                                // }}
-                                className="menu-item menu-item-danger"
-                              >
-                                削除
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-            
-                      {/* <td style={{ position: "relative" }}>
-                        <button
-                          onClick={() =>
-                            setOpenMenuId(openMenuId === product.id ? null : product.id)
-                          }
-                        >
-                          ⋮
-                        </button>
-                        {openMenuId === product.id && (
-                          <div style={{ zIndex: 1 }}>
-                            <button onClick={() => setEditingProduct(product)}>
-                              編集
-                            </button>
-                            <button
-                              onClick={() => setDeleteTarget(product)}
-                              style={{ color: "red" }}
-                            >
-                              削除
-                            </button>
-                          </div>
-                        )}
-                      </td> */}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          {/* 페이지네이션 - goToPage 함수 사용 */}
+          <div className="pagination">
+            <button
+              onClick={() => goToPage(1)}
+              disabled={currentPage === 1}
+              className="pagination-button"
+            >
+              <ChevronsLeft size={18} />
+            </button>
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="pagination-button"
+            >
+              <ChevronLeft size={18} />
+            </button>
 
-      {/* <div style={{ marginTop: "10px" }}>
-        <button disabled={totalPages <= 1} onClick={() => setPage((p) => p - 1)}>
-          前のページ
-        </button>
-        <span style={{ margin: "0 10px" }}>Page {totalPages}</span>
-        <button disabled={!NextPage} onClick={() => setPage((p) => p + 1)}>
-          次のページ
-        </button>
-      </div> */}
+            <button className="pagination-button active">{currentPage}</button>
+            {currentPage < totalPages && (
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                className="pagination-button"
+              >
+                {currentPage + 1}
+              </button>
+            )}
+            {currentPage + 1 < totalPages && (
+              <span className="pagination-dots">...</span>
+            )}
+            {currentPage + 1 < totalPages && (
+              <button
+                onClick={() => goToPage(totalPages)}
+                className="pagination-button"
+              >
+                {totalPages}
+              </button>
+            )}
 
-              {/* 페이지네이션 - goToPage 함수 사용 */}
-        <div className="pagination">
-          <button
-            onClick={() => goToPage(1)}
-            disabled={currentPage === 1}
-            className="pagination-button"
-          >
-            <ChevronsLeft size={18} />
-          </button>
-          <button
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="pagination-button"
-          >
-            <ChevronLeft size={18} />
-          </button>
-
-          <button className="pagination-button active">{currentPage}</button>
-          {currentPage < totalPages && (
             <button
               onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
               className="pagination-button"
             >
-              {currentPage + 1}
+              <ChevronRight size={18} />
             </button>
-          )}
-          {currentPage + 1 < totalPages && (
-            <span className="pagination-dots">...</span>
-          )}
-          {currentPage + 1 < totalPages && (
             <button
               onClick={() => goToPage(totalPages)}
+              disabled={currentPage === totalPages}
               className="pagination-button"
             >
-              {totalPages}
+              <ChevronsRight size={18} />
             </button>
-          )}
+          </div>
 
-          <button
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="pagination-button"
-          >
-            <ChevronRight size={18} />
-          </button>
-          <button
-            onClick={() => goToPage(totalPages)}
-            disabled={currentPage === totalPages}
-            className="pagination-button"
-          >
-            <ChevronsRight size={18} />
-          </button>
-        </div>
+          {/* 여기까지 수정 */}
 
       {/* 登録用ダイアログ */}
       {isOpen && (
