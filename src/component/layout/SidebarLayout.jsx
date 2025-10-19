@@ -30,7 +30,8 @@ function SidebarLayout() {
       <nav className="sidebar">
         {/* Header */}
         <div className="sidebar-header">
-          <div className="logo-beconn" onClick={() => navigate('/')} style={{cursor: 'pointer'}}>BeConn</div>
+          {/*<div className="logo-beconn" onClick={() => navigate('/')} style={{cursor: 'pointer'}}>BeConn</div>*/}
+          <Link to='/'><div className="logo-beconn" style={{cursor: 'pointer'}}>BeConn</div></Link>
           <div className="user-info">
             <div className="user-avatar">
             <User className="avatar-icon" />

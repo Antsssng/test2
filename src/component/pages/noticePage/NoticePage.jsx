@@ -5,28 +5,65 @@ import DeleteConfirmModal from '../../layout/DeleteConfirmModal';
 import { authApi } from '../../../utils/authApi';
 import { useAuth } from '../../../utils/AuthContext';
 import { formatDate } from '../../../utils/common';
+import '../../../utils/common.css';
 import './NoticePage.css';
+
+
+//페이지 쿼리를 url(navigate)로 적용
 
 function NoticePage() {
   const navigate = useNavigate();
-  const { user, isLoggedIn} = useAuth();
-  const [notices, setNotices] = useState([]);
+  const {user, isLoggedIn} = useAuth();
+
+  //const [notices, setNotices] = useState([]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  //const [pageCount, setPageCount] = useState(1);
+  const [limit, setLimit] = useState(10);
+
+  const [loading, setLoading] = useState(false);
+  
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const dropdownRef = useRef(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen]= useState(false);
   const [selectedNoticeId, setSelectedNoticeId]=useState(null);
 
+  const notices = [
+    {
+      id: 1,
+      title: '공지사항 1',
+      created_user_name: '홍길동',
+      created_at: '2025-10-18T09:00:00Z',
+      updated_user_name: '홍길동',
+      updated_at: '2025-10-18T09:30:00Z',
+    },
+    {
+      id: 2,
+      title: '공지사항 2',
+      created_user_name: '김철수',
+      created_at: '2025-10-17T14:00:00Z',
+      updated_user_name: '김철수',
+      updated_at: '2025-10-17T15:00:00Z',
+    },
+    {
+      id: 3,
+      title: '공지사항 3',
+      created_user_name: '이영희',
+      created_at: '2025-10-16T11:00:00Z',
+      updated_user_name: '이영희',
+      updated_at: '2025-10-16T12:00:00Z',
+    },
+  ];
+  const [totalPages, setTotalPages] = useState(2);
+
   
   const fetchNotices = async () => {
     try {
       setLoading(true);
-      const res = await authApi.get(`/notices?page=${currentPage}&limit=10`);
+      const res = await authApi.get(`/notices?page=${currentPage}&limit=${limit}`);
       setNotices(res.data.notices);
-      setTotalPages(res.data.pageCount);
+      setTotalPages(res.data.page_count);
     } catch (error) {
       console.error('Failed to fetch notices:', error);
     } finally {
@@ -88,8 +125,8 @@ function NoticePage() {
     if (!isLoggedIn) {
       return;
     }
-    fetchNotices();
-  }, [currentPage, isLoggedIn]);
+    //fetchNotices();
+  }, [currentPage, isLoggedIn, user]);
   
   useEffect(() => {
     function handleClickOutside(event) {
@@ -103,13 +140,8 @@ function NoticePage() {
 
   
   return (
-    <div className="notice-list-page">
+    <div className="list-page">
       <div className="container">
-        <button onClick={() => navigate(-1)} className="back-button">
-          <ChevronLeft size={20} />
-          <span>BACK</span>
-        </button>
-
         <h1 className="page-title">お知らせ一覧</h1>
 
         <div className="actions-bar">
@@ -137,13 +169,13 @@ function NoticePage() {
         </div>
 
         <div className="table-wrapper">
-          <table className="notice-table">
+          <table className="table">
             <thead>
               <tr>
                 <th className="col-no">No.</th>
                 <th className="col-title">タイトル</th>
                 <th className="col-creator">作成</th>
-                <th className="col-updater">更新者</th>
+                <th className="col-updater">更新</th>
                 {user?.role === 'admin' && <th className="col-menu"></th>}
               </tr>
             </thead>
@@ -164,7 +196,7 @@ function NoticePage() {
                 notices.map((notice, index) => (
                   <tr
                     key={notice.id}
-                    className="notice-row"
+                    className="row"
                     onClick={() => handleNoticeClick(notice.id)}
                   >
                     <td>{(currentPage - 1) * 10 + index + 1}</td>

@@ -6,16 +6,18 @@ import { authApi } from './authApi';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState({ user_id: '1', name: 'test', role: 'admin' });
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [loading, setLoading] = useState('');
   const navigate = useNavigate();
-  const a = 1;
 
   useEffect(() => {
     console.log('🔵 [AuthContext] useEffect 시작', new Date().getTime());
     //setLoading(true);
-    const checkToken = async() => {
+    //checkToken();
+  }, [navigate]);
+
+  const checkToken = async() => {
       if (window.location.pathname === '/login') {
         console.log('🔵 [AuthContext] 로그인 페이지, 종료');
         setLoading(false);
@@ -44,9 +46,6 @@ export const AuthProvider = ({ children }) => {
         navigate('/login');
       }
     };
-
-    //checkToken();
-  }, [navigate]);
 
 
   const login = async (employee_id, employee_pw) => {

@@ -1,34 +1,61 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "../../../utils/authApi";
 import { useAuth } from "../../../utils/AuthContext"; 
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreVertical } from 'lucide-react';
 import Dialog from "../../layout/Dialog";
+import "../../../utils/common.css";
 
 function ProductsPage() {
-  const [loading, setLoading] = useState(true);
-  const [products, setProducts] = useState([]);
+  const navigate = useNavigate();
+  const {user, isLoggedIn} = useAuth();
+
+  const [loading, setLoading] = useState(false);
+  //const [products, setProducts] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newRemark, setNewRemark] = useState("");
-  const [page, setPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [NextPage, setNextPage] = useState(false);
-  const token = useAuth();
+  const [limit, setLimit] = useState(10);
   const [editingProduct, setEditingProduct] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
 
-  const isDuplicate = products.some(
-    (p) => p.product_name.trim() === newName.trim()
-  );
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const dropdownRef = useRef(null);
+
+  // const isDuplicate = products.some(
+  //   (p) => p.product_name.trim() === newName.trim()
+  // );
+
+  const products = [
+    {
+      id: 1,
+      product_name: '프로덕트 1',
+      remark: '홍길동'
+    },
+    {
+      id: 2,
+      product_name: '프로덕트 2',
+      remark: '김철수',
+    },
+    {
+      id: 3,
+      product_name: '프로덕트 3',
+      remark: '이영희',
+    },
+  ];
+  const [totalPages, setTotalPages] = useState(2);
 
 
   // useEffect 外に関数化(page1だと即時反映できない)
-  const fetchProducts = async (pageNumber = page) => {
-    setLoading(true);
+  const fetchProducts = async () => {
     try {
-      const res = await authApi.get(`/products?page=${pageNumber}&limit=10`);
+      setLoading(true);
+      const res = await authApi.get(`/products?page=${currentPage}&limit=${limit}`);
       setProducts(res.data.products || []);
   
       const total = res.data.total || 0; // 総件数
@@ -44,8 +71,8 @@ function ProductsPage() {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, [token, page]);
+    //fetchProducts();
+  }, [currentPage, isLoggedIn, user]);
   
 
   // プロダクト一覧取得
@@ -73,189 +100,272 @@ function ProductsPage() {
   
 
   // 新しいプロダクトを追加
-  const handleAddProduct = async () => {
-    try {
-      const res = await authApi.post("/product", {
-        product_name: newName,
-        remark: newRemark,
-      });
+  // const handleAddProduct = async () => {
+  //   try {
+  //     const res = await authApi.post("/product", {
+  //       product_name: newName,
+  //       remark: newRemark,
+  //     });
 
-      setMessage(res.data.msg || "登録しました");
-      setMessageType("success");
-      setTimeout(() => setMessage(""), 3000);
+  //     setMessage(res.data.msg || "登録しました");
+  //     setMessageType("success");
+  //     setTimeout(() => setMessage(""), 3000);
 
-      setPage(1); 
-      fetchProducts(1);
+  //     setPage(1); 
+  //     fetchProducts(1);
 
-      setNewName("");
-      setNewRemark("");
-      setIsOpen(false);
-    } catch (error) {
-      const errMsg = error.response?.data?.error || "登録に失敗しました";
-      setMessage(errMsg);
-      setMessageType("error");
-      setTimeout(() => setMessage(""), 3000);
-    }
-  };
+  //     setNewName("");
+  //     setNewRemark("");
+  //     setIsOpen(false);
+  //   } catch (error) {
+  //     const errMsg = error.response?.data?.error || "登録に失敗しました";
+  //     setMessage(errMsg);
+  //     setMessageType("error");
+  //     setTimeout(() => setMessage(""), 3000);
+  //   }
+  // };
 
   // プロダクト更新
-  const handleUpdateProduct = async (product) => {
-    try {
-      const res = await authApi.put(`/product/${product.id}`, {
-        product_name: product.product_name,
-        remark: product.remark,
-      });
+  // const handleUpdateProduct = async (product) => {
+  //   try {
+  //     const res = await authApi.put(`/product/${product.id}`, {
+  //       product_name: product.product_name,
+  //       remark: product.remark,
+  //     });
 
-      setMessage(res.data.msg || "更新しました");
-      setMessageType("success");
-      setTimeout(() => setMessage(""), 3000);
+  //     setMessage(res.data.msg || "更新しました");
+  //     setMessageType("success");
+  //     setTimeout(() => setMessage(""), 3000);
 
-      setProducts((prev) =>
-        prev.map((p) => (p.id === product.id ? product : p))
-      );
+  //     setProducts((prev) =>
+  //       prev.map((p) => (p.id === product.id ? product : p))
+  //     );
 
-      setEditingProduct(null);
-    } catch (error) {
-      const errMsg = error.response?.data?.error || "更新に失敗しました";
-      setMessage(errMsg);
-      setMessageType("error");
-      setTimeout(() => setMessage(""), 3000);
-    }
-  };
+  //     setEditingProduct(null);
+  //   } catch (error) {
+  //     const errMsg = error.response?.data?.error || "更新に失敗しました";
+  //     setMessage(errMsg);
+  //     setMessageType("error");
+  //     setTimeout(() => setMessage(""), 3000);
+  //   }
+  // };
   
 
   // プロダクト削除
-  const handleDeleteConfirmed = async () => {
-    if (!deleteTarget) return;
+  // const handleDeleteConfirmed = async () => {
+  //   if (!deleteTarget) return;
 
-    try {
-      const res = await authApi.delete(`/product/${deleteTarget.id}`);
+  //   try {
+  //     const res = await authApi.delete(`/product/${deleteTarget.id}`);
 
-      setMessage(res.data.msg || "削除しました");
-      setMessageType("success");
-      setTimeout(() => setMessage(""), 3000);
+  //     setMessage(res.data.msg || "削除しました");
+  //     setMessageType("success");
+  //     setTimeout(() => setMessage(""), 3000);
 
-      const newProducts = products.filter((p) => p.id !== deleteTarget.id);
-      setProducts(newProducts);
-      setNextPage(newProducts.length === 10);
-      setDeleteTarget(null);
-    } catch (error) {
-      const errMsg = error.response?.data?.error || "削除に失敗しました";
-      setMessage(errMsg);
-      setMessageType("error");
-      setTimeout(() => setMessage(""), 3000);
-      setDeleteTarget(null);
-    }
-  };
+  //     const newProducts = products.filter((p) => p.id !== deleteTarget.id);
+  //     setProducts(newProducts);
+  //     setNextPage(newProducts.length === 10);
+  //     setDeleteTarget(null);
+  //   } catch (error) {
+  //     const errMsg = error.response?.data?.error || "削除に失敗しました";
+  //     setMessage(errMsg);
+  //     setMessageType("error");
+  //     setTimeout(() => setMessage(""), 3000);
+  //     setDeleteTarget(null);
+  //   }
+  // };
   
   
 
   return (
+    <div className="list-page">
+      <div className="container">
+        <h1 className="page-title">プロダクト一覧</h1>
 
-    <div style={{ padding: "30px" }}>
-        {message && (
-      <div
-        style={{
-          backgroundColor: messageType === "success" ? "#d4edda" : "#f8d7da",
-          color: messageType === "success" ? "#155724" : "#721c24",
-          padding: "10px",
-          borderRadius: "6px",
-          marginBottom: "10px",
-          transition: "opacity 0.3s ease",
-        }}
-      >
-        {message}
-      </div>
-    )}
-      <h1>プロダクト一覧</h1>
-
-      <button onClick={() => setIsOpen(true)}>登録</button>
-
-      <table
-        border="1"
-        cellPadding="10"
-        style={{ borderCollapse: "collapse", width: "100%", marginTop: "10px" }}
-      >
-        <thead>
-          <tr>
-            <th>ロゴ</th>
-            <th>プロダクト名</th>
-            <th>詳細</th>
-            <th>備考</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-  {loading ? (
-    <tr>
-      <td colSpan="5" style={{ textAlign: "center" }}>
-        読み込み中...
-      </td>
-    </tr>
-  ) : (
-    products.map((product) => (
-      <tr key={product.id}>
-        <td>
-          <div
-            style={{
-              width: "40px",
-              height: "40px",
-              background: "#ddd",
-              textAlign: "center",
-              lineHeight: "40px",
-            }}
-          >
-            Logo
-          </div>
-        </td>
-        <td>{product.product_name}</td>
-        <td>
-          <Link to={`/products/${product.id}/plan`}>
-            <button>プラン</button>
-          </Link>
-          <Link to={`/contracts?product_id=${product.id}`}>
-            <button>契約</button>
-          </Link>
-        </td>
-        <td>{product.remark}</td>
-        <td style={{ position: "relative" }}>
-          <button
-            onClick={() =>
-              setOpenMenuId(openMenuId === product.id ? null : product.id)
-            }
-          >
-            ⋮
-          </button>
-          {openMenuId === product.id && (
-            <div style={{ zIndex: 1 }}>
-              <button onClick={() => setEditingProduct(product)}>
-                編集
-              </button>
-              <button
-                onClick={() => setDeleteTarget(product)}
-                style={{ color: "red" }}
-              >
-                削除
-              </button>
+        <div>
+          <div className="actions-bar">
+            <div className="search-group">
+              <div className="search-input-wrapper">
+              </div>
             </div>
-          )}
-        </td>
-      </tr>
-    ))
-  )}
-</tbody>
+            <button className="btn btn-primary"onClick={() => setIsOpen(true)}>登録</button>
+          </div>
+          <div className="table-wrapper">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>ロゴ</th>
+                  <th>プロダクト名</th>
+                  <th>詳細</th>
+                  <th>備考</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="5" className="loading-cell">
+                      読み込み中...
+                    </td>
+                  </tr>
+                ) : products.length === 0 ? (
+                  <tr>
+                    <td colSpan={user?.role === 'admin' ? 5 : 4} className="empty-cell">
+                      プロダクトがありません
+                    </td>
+                  </tr>
+                ) : (
+                  products.map((product) => (
+                    <tr 
+                      key={product.id}
+                      className="row"
+                    >
 
-      </table>
+                      {/* 여기까지 수정함 */}
+                      <td style={{
+                            width: "40px",
+                            height: "40px",
+                            background: "#ddd",
+                            textAlign: "center",
+                            lineHeight: "40px",
+                          }}>Logo
+                      </td>
+                      <td>{product.product_name}</td>
+                      <td>
+                        <Link to={`/products/${product.id}/plan`}>
+                          <button>プラン</button>
+                        </Link>
+                        <Link to={`/contracts?product_id=${product.id}`}>
+                          <button>契約</button>
+                        </Link>
+                      </td>
+                      <td>{product.remark}</td>
+                      <td className="menu-cell">
+                        <div className="menu-wrapper" ref={openDropdownId === product.id ? dropdownRef : null}>
+                          <button
+                            className="menu-button"
+                            onClick={(e) => {
+                              setOpenDropdownId(openDropdownId === product.id ? null : product.id);
+                            }}
+                          >
+                            <MoreVertical size={20} />
+                          </button>
+                          {openDropdownId === product.id && (
+                            <div className="menu-dropdown">
+                              <button
+                                // onClick={(e) => {
+                                //   handleEdit(e, notice.id);
+                                //   setOpenDropdownId(null);  }}
+                                className="menu-item"
+                              >
+                                編集
+                              </button>
+                              <button
+                                // onClick={(e) => {
+                                //   openDeleteModal(e, notice.id);
+                              
+                                // }}
+                                className="menu-item menu-item-danger"
+                              >
+                                削除
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+            
+                      {/* <td style={{ position: "relative" }}>
+                        <button
+                          onClick={() =>
+                            setOpenMenuId(openMenuId === product.id ? null : product.id)
+                          }
+                        >
+                          ⋮
+                        </button>
+                        {openMenuId === product.id && (
+                          <div style={{ zIndex: 1 }}>
+                            <button onClick={() => setEditingProduct(product)}>
+                              編集
+                            </button>
+                            <button
+                              onClick={() => setDeleteTarget(product)}
+                              style={{ color: "red" }}
+                            >
+                              削除
+                            </button>
+                          </div>
+                        )}
+                      </td> */}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-      <div style={{ marginTop: "10px" }}>
-        <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+      {/* <div style={{ marginTop: "10px" }}>
+        <button disabled={totalPages <= 1} onClick={() => setPage((p) => p - 1)}>
           前のページ
         </button>
-        <span style={{ margin: "0 10px" }}>Page {page}</span>
+        <span style={{ margin: "0 10px" }}>Page {totalPages}</span>
         <button disabled={!NextPage} onClick={() => setPage((p) => p + 1)}>
           次のページ
         </button>
-      </div>
+      </div> */}
+
+              {/* 페이지네이션 - goToPage 함수 사용 */}
+        <div className="pagination">
+          <button
+            onClick={() => goToPage(1)}
+            disabled={currentPage === 1}
+            className="pagination-button"
+          >
+            <ChevronsLeft size={18} />
+          </button>
+          <button
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="pagination-button"
+          >
+            <ChevronLeft size={18} />
+          </button>
+
+          <button className="pagination-button active">{currentPage}</button>
+          {currentPage < totalPages && (
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              className="pagination-button"
+            >
+              {currentPage + 1}
+            </button>
+          )}
+          {currentPage + 1 < totalPages && (
+            <span className="pagination-dots">...</span>
+          )}
+          {currentPage + 1 < totalPages && (
+            <button
+              onClick={() => goToPage(totalPages)}
+              className="pagination-button"
+            >
+              {totalPages}
+            </button>
+          )}
+
+          <button
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="pagination-button"
+          >
+            <ChevronRight size={18} />
+          </button>
+          <button
+            onClick={() => goToPage(totalPages)}
+            disabled={currentPage === totalPages}
+            className="pagination-button"
+          >
+            <ChevronsRight size={18} />
+          </button>
+        </div>
 
       {/* 登録用ダイアログ */}
       {isOpen && (
@@ -344,6 +454,9 @@ function ProductsPage() {
   </Dialog>
 )}
 
+    </div>
+    </div>
+    
     </div>
   );
 }
